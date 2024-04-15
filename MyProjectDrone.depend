@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1713529216 source:c:\users\furma\downloads\myprojectdrone\main.cpp
+	<iostream>
+	<string>
+
