@@ -1,11 +1,12 @@
 # depslib dependency file v1.0
-1714391657 source:c:\users\furma\downloads\myprojectdrone\main.cpp
+1714420170 source:c:\users\furma\downloads\myprojectdrone\main.cpp
 	<iostream>
 	<string>
 	<vector>
 	<list>
 	<algorithm>
-	"iterators.h"
+	<ctime>
+	<cstdlib>
 
 1714391642 c:\users\furma\downloads\myprojectdrone\iterators.h
 

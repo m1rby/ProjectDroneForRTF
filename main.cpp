@@ -3,9 +3,28 @@
 #include <vector>
 #include <list>
 #include <algorithm>
+#include <ctime>   // Для инициализации генератора случайных чисел
+#include <cstdlib> // Для использования rand()
 
 using namespace std;
-#include "iterators.h"
+
+#ifndef ITERATORS_H
+#define ITERATORS_H
+
+template<class Type>
+class DroneIterator { //общий класс для итератора
+protected:
+    DroneIterator(){}
+public:
+    virtual void first() = 0; // Установить итератор на первый элемент
+    virtual void next() = 0;  // Перейти к следующему элементу
+    virtual bool hasNext() = 0; // Проверить, есть ли следующий элемент
+    virtual bool isDone() const = 0; // Проверить, конец ли контейнера
+    virtual Type getCurrent() = 0; // Получить текущий элемент
+    virtual ~DroneIterator() {} // Виртуальный деструктор
+};
+
+#endif // ITERATORS_H
 
 class Drone {
 protected:
@@ -114,6 +133,38 @@ public:
     virtual ~DroneContainer() {}
 };
 
+class VectorDroneIterator : public DroneIterator<Drone *> { //для вектора дронов
+private:
+    vector<Drone *> &drones; // Ссылка на вектор дронов
+    size_t index; // Индекс текущего элемента
+
+public:
+    VectorDroneIterator(vector<Drone *> &drones) : drones(drones), index(0) {}
+
+    void first() override {
+        index = 0; // Устанавливаем итератор на начало вектора
+    }
+
+    void next() override {
+        index++; // Переходим к следующему элементу
+    }
+
+    bool hasNext() override {
+        return index < drones.size(); // Проверяем, есть ли следующий элемент
+    }
+
+    bool isDone() const override {
+        return index >= drones.size(); // Проверяем, дошли ли до предела контейнера
+    }
+
+    Drone* getCurrent() override {
+        if (index < drones.size()) {
+            return drones[index]; // Возвращаем текущий элемент
+        }
+        return nullptr;
+    }
+};
+
 class VectorDroneContainer : public DroneContainer {
 private:
     vector<Drone *> drones;
@@ -128,9 +179,13 @@ public:
     }
 
     void printAllDrones() override {
-        for (auto drone : drones) { // Проходим по всем дронам в векторе
-            drone->printInfo(); // Выводим информацию о каждом дроне
+        for (auto drone : drones) {
+            drone->printInfo();
         }
+    }
+
+    VectorDroneIterator *getIterator() override {
+        return new VectorDroneIterator(drones);
     }
 };
 
@@ -142,19 +197,19 @@ private:
 public:
     ListDroneIterator(list<Drone *> *drones) : drones(drones) {}
 
-    void first() {
+    void first() override {
         it = drones->begin(); // Устанавливаем итератор на начало списка
     }
 
-    void next() {
+    void next() override {
         it++; // Переходим к следующему элементу
     }
 
-    bool hasNext() {
+    bool hasNext() override {
         return it != drones->end(); // Проверяем, есть ли следующий элемент
     }
 
-    bool isDone() {
+    bool isDone() const override {
         return it == drones->end(); // Проверяем, дошли ли до предела контейнера
     }
 
@@ -184,42 +239,13 @@ public:
             drone->printInfo(); // Выводим информацию о каждом дроне
         }
     }
-};
 
-
-
-class VectorDroneIterator : public DroneIterator<Drone *> { //для вектора дронов
-private:
-    vector<Drone *> &drones; // Ссылка на вектор дронов
-    size_t amount;
-    size_t index; // Индекс текущего элемента
-
-public:
-    VectorDroneIterator(vector<Drone *> &drones) : drones(drones), amount(drones.size()), index(0) {}
-
-    void first() {
-        index = 0; // Устанавливаем итератор на начало вектора
-    }
-
-    void next() {
-        index++; // Переходим к следующему элементу
-    }
-
-    bool hasNext() {
-        return index < drones.size(); // Проверяем, есть ли следующий элемент
-    }
-
-    bool isDone() {
-        return index>=amount; // Проверяем, дошли ли до предела контейнера
-    }
-
-    Drone* getCurrent() {
-        if (index < drones.size()) {
-            return drones[index]; // Возвращаем текущий элемент
-        }
-        return nullptr;
+    DroneIterator<Drone *> *getIterator() override {
+        return new ListDroneIterator(&drones);
     }
 };
+
+
 
 class WeightFilterIteratorDecorator : public DroneIterator<Drone *> { //декаратор фильтр по весу
 private:
@@ -249,7 +275,7 @@ public:
         return false;
     }
 
-    bool isDone() {
+    bool isDone() const override {
         return iterator->isDone();
     }
 
@@ -286,7 +312,7 @@ public:
         return false;
     }
 
-    bool isDone() {
+    bool isDone() const override {
         return iterator->isDone();
     }
 
@@ -295,13 +321,13 @@ public:
     }
 };
 
-class MaxSpeedFilterIteratorDecorator : public DroneIterator<Drone *> {
+class VectorMaxSpeedFilterIteratorDecorator : public DroneIterator<Drone *> {
 private:
-    DroneIterator<Drone *> *iterator;
+    VectorDroneIterator *iterator;
     float maxSpeed;
 
 public:
-    MaxSpeedFilterIteratorDecorator(DroneIterator<Drone *> *iterator, float maxSpeed)
+    VectorMaxSpeedFilterIteratorDecorator(VectorDroneIterator *iterator, float maxSpeed)
         : iterator(iterator), maxSpeed(maxSpeed) {}
 
     void first() override {
@@ -323,7 +349,7 @@ public:
         return false;
     }
 
-    bool isDone() {
+    bool isDone() const override {
         return iterator->isDone();
     }
 
@@ -332,9 +358,80 @@ public:
     }
 };
 
+template<class T>
+class DroneFactory {
+public:
+    T* create(string model, int weight, float maxSpeed, int batteryLife, int currentBattery) const {
+        return new T(model, weight, maxSpeed, batteryLife, currentBattery);
+    }
+};
+
+template <class ContainerType>
+void filterAndPrintDronesByMaxSpeed(ContainerType* container, float maxSpeed) {
+    // Получаем итератор контейнера дронов
+    auto iterator = container->getIterator();
+
+    // Создаем декоратор для фильтрации по максимальной скорости
+    auto vectorIterator = dynamic_cast<VectorDroneIterator *>(iterator);
+if (vectorIterator) {
+    auto speedFilterDecorator = new VectorMaxSpeedFilterIteratorDecorator(vectorIterator, maxSpeed);
+    iterator = speedFilterDecorator;
+} else {
+    // Обработка ошибки: если iterator не является экземпляром VectorDroneIterator
+    // Здесь можно выводить сообщение об ошибке или принимать другие меры по усмотрению
+    cout << "Ошибка: Итератор не является экземпляром VectorDroneIterator." << endl;
+}
+
+    // Переопределяем итератор для использования декоратора
+    // Выводим информацию о дронах с учетом фильтрации по максимальной скорости
+    cout << "Дроны с максимальной скоростью не более " << maxSpeed << " м/с:" << endl;
+    while (!iterator->isDone()) {
+        Drone *currentDrone = iterator->getCurrent();
+        if (currentDrone) {
+            currentDrone->printInfo();
+        }
+        iterator->next();
+    }
+
+}
 
 int main() {
     setlocale(LC_ALL,"");
+    srand(time(0));
+    // Создаем контейнер вектора дронов
+    DroneContainer *container = new VectorDroneContainer;
+
+
+    // Создаем несколько дронов и добавляем их в контейнер
+    DroneFactory<ScoutDrone> scoutFactory;
+    DroneFactory<CargoDrone> cargoFactory;
+
+    // Генерация случайного числа дронов от 1 до 10
+int numDrones = rand() % 10 + 1;
+
+for (int i = 0; i < numDrones; ++i) {
+    // Генерация случайной модели, веса, максимальной скорости,
+    // жизни батареи и текущего заряда батареи для каждого дрона
+    string model = "Model" + to_string(i);
+    int weight = rand() % 1000 + 500;
+    float maxSpeed = (rand() % 50 + 10) / 10.0f;
+    int batteryLife = rand() % 200 + 100;
+    int currentBattery = rand() % 200 + 100;
+
+    Drone* drone;
+    if (rand() % 2 == 0) {
+        drone = scoutFactory.create(model, weight, maxSpeed, batteryLife, currentBattery);
+    } else {
+        drone = cargoFactory.create(model, weight, maxSpeed, batteryLife, currentBattery);
+    }
+    container->addDrone(drone);
+}
+
+
+    // Вызываем функцию для фильтрации и вывода дронов по максимальной скорости
+    float maxSpeedFilter = 3.0f;
+    filterAndPrintDronesByMaxSpeed(container, maxSpeedFilter);
+
     int choice;
 
     do {
@@ -388,6 +485,7 @@ int main() {
         delete selectedDrone;
     } while (true);
 
+    delete container; // Очищаем память от контейнера
+
     return 0;
 }
-
