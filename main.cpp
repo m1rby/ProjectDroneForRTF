@@ -1,5 +1,8 @@
 #include <iostream>
 #include <string>
+#include <vector>
+#include <list>
+#include <algorithm>
 
 using namespace std;
 
@@ -19,7 +22,7 @@ public:
         cout << "Модель: " << model << endl;
         cout << "Вес: " << weight << " кг" << endl;
         cout << "Максимальная скорость: " << maxSpeed << " м/с" << endl;
-        cout << "Максимальный заряд батареи: " << batteryLife << "процентов" << endl;
+        cout << "Максимальный заряд батареи: " << batteryLife << " процентов" << endl;
         cout << "Заряд батареи: " << currentBattery << " процентов" << endl;
     }
 
@@ -47,7 +50,7 @@ public:
     ScoutDrone(string model, int weight, float maxSpeed, int batteryLife, int cameraResolution)
         : Drone(model, weight, maxSpeed, batteryLife), cameraResolution(cameraResolution) {
         currentBattery = 20;
-        }
+    }
 
     void printInfo() override {
         Drone::printInfo();
@@ -85,6 +88,54 @@ public:
             currentBattery -= 20;
         } else {
             cout << "Грузовой дрон не может взлететь. Заряд меньше 20 процентов. ОПАСНО" << endl;
+        }
+    }
+};
+
+class DroneContainer {
+public:
+    virtual void addDrone(Drone *drone) = 0;
+    virtual void removeDrone(Drone *drone) = 0;
+    virtual void printAllDrones() = 0;
+    virtual ~DroneContainer() {}
+};
+
+class VectorDroneContainer : public DroneContainer {
+private:
+    vector<Drone *> drones;
+
+public:
+    void addDrone(Drone *drone) override {
+        drones.push_back(drone);
+    }
+
+    void removeDrone(Drone *drone) override {
+        drones.erase(remove(drones.begin(), drones.end(), drone), drones.end());
+    }
+
+    void printAllDrones() override {
+        for (auto drone : drones) { // Проходим по всем дронам в векторе
+            drone->printInfo(); // Выводим информацию о каждом дроне
+        }
+    }
+};
+
+class ListDroneContainer : public DroneContainer {
+private:
+    list<Drone *> drones;
+
+public:
+    void addDrone(Drone *drone) override {
+        drones.push_back(drone);
+    }
+
+    void removeDrone(Drone *drone) override {
+        drones.remove(drone);
+    }
+
+    void printAllDrones() override {
+        for (auto drone : drones) { // Проходим по всем дронам в списке
+            drone->printInfo(); // Выводим информацию о каждом дроне
         }
     }
 };
@@ -146,3 +197,4 @@ int main() {
 
     return 0;
 }
+
