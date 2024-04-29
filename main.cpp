@@ -5,6 +5,7 @@
 #include <algorithm>
 
 using namespace std;
+#include "iterators.h"
 
 class Drone {
 protected:
@@ -97,6 +98,7 @@ public:
     virtual void addDrone(Drone *drone) = 0;
     virtual void removeDrone(Drone *drone) = 0;
     virtual void printAllDrones() = 0;
+    virtual DroneIterator<Drone *> *getIterator() = 0;
     virtual ~DroneContainer() {}
 };
 
@@ -120,6 +122,38 @@ public:
     }
 };
 
+class ListDroneIterator : public DroneIterator<Drone *> { //для списка дронов
+private:
+    list<Drone *> *drones; // Ссылка на список дронов
+    list<Drone *>::const_iterator it; // Итератор для списка
+
+public:
+    ListDroneIterator(list<Drone *> *drones) : drones(drones) {}
+
+    void first() {
+        it = drones->begin(); // Устанавливаем итератор на начало списка
+    }
+
+    void next() {
+        it++; // Переходим к следующему элементу
+    }
+
+    bool hasNext() {
+        return it != drones->end(); // Проверяем, есть ли следующий элемент
+    }
+
+    bool isDone() {
+        return it == drones->end(); // Проверяем, дошли ли до предела контейнера
+    }
+
+    Drone* getCurrent() override {
+        if (it != drones->end()) {
+            return *it; // Возвращаем текущий элемент
+        }
+        return nullptr;
+    }
+};
+
 class ListDroneContainer : public DroneContainer {
 private:
     list<Drone *> drones;
@@ -139,6 +173,43 @@ public:
         }
     }
 };
+
+
+
+class VectorDroneIterator : public DroneIterator<Drone *> { //для вектора дронов
+private:
+    vector<Drone *> &drones; // Ссылка на вектор дронов
+    size_t amount;
+    size_t index; // Индекс текущего элемента
+
+public:
+    VectorDroneIterator(vector<Drone *> &drones) : drones(drones), amount(drones.size()), index(0) {}
+
+    void first() {
+        index = 0; // Устанавливаем итератор на начало вектора
+    }
+
+    void next() {
+        index++; // Переходим к следующему элементу
+    }
+
+    bool hasNext() {
+        return index < drones.size(); // Проверяем, есть ли следующий элемент
+    }
+
+    bool isDone() {
+        return index>=amount; // Проверяем, дошли ли до предела контейнера
+    }
+
+    Drone* getCurrent() {
+        if (index < drones.size()) {
+            return drones[index]; // Возвращаем текущий элемент
+        }
+        return nullptr;
+    }
+};
+
+
 
 int main() {
     setlocale(LC_ALL,"");
