@@ -5,26 +5,9 @@
 #include <algorithm>
 #include <ctime>   // Для инициализации генератора случайных чисел
 #include <cstdlib> // Для использования rand()
+#include <cmath> // Для функции (задание 9)
 
 using namespace std;
-
-#ifndef ITERATORS_H
-#define ITERATORS_H
-
-template<class Type>
-class DroneIterator { //общий класс для итератора
-protected:
-    DroneIterator(){}
-public:
-    virtual void first() = 0; // Установить итератор на первый элемент
-    virtual void next() = 0;  // Перейти к следующему элементу
-    virtual bool hasNext() = 0; // Проверить, есть ли следующий элемент
-    virtual bool isDone() const = 0; // Проверить, конец ли контейнера
-    virtual Type getCurrent() = 0; // Получить текущий элемент
-    virtual ~DroneIterator() {} // Виртуальный деструктор
-};
-
-#endif // ITERATORS_H
 
 class Drone {
 protected:
@@ -123,6 +106,20 @@ public:
         }
     }
 };
+
+template<class Type>
+class DroneIterator { //общий класс для итератора
+protected:
+    DroneIterator(){}
+public:
+    virtual void first() = 0; // Установить итератор на первый элемент
+    virtual void next() = 0;  // Перейти к следующему элементу
+    virtual bool hasNext() = 0; // Проверить, есть ли следующий элемент
+    virtual bool isDone() const = 0; // Проверить, конец ли контейнера
+    virtual Type getCurrent() = 0; // Получить текущий элемент
+    virtual ~DroneIterator() {} // Виртуальный деструктор
+};
+
 
 class DroneContainer {
 public:
@@ -358,11 +355,11 @@ public:
     }
 };
 
-template<class T>
+template<class Factory>
 class DroneFactory {
 public:
-    T* create(string model, int weight, float maxSpeed, int batteryLife, int currentBattery) const {
-        return new T(model, weight, maxSpeed, batteryLife, currentBattery);
+    Factory* create(string model, int weight, float maxSpeed, int batteryLife, int currentBattery) const {
+        return new Factory(model, weight, maxSpeed, batteryLife, currentBattery);
     }
 };
 
@@ -373,29 +370,30 @@ void filterAndPrintDronesByMaxSpeed(ContainerType* container, float maxSpeed) {
 
     // Создаем декоратор для фильтрации по максимальной скорости
     auto vectorIterator = dynamic_cast<VectorDroneIterator *>(iterator);
-if (vectorIterator) {
-    auto speedFilterDecorator = new VectorMaxSpeedFilterIteratorDecorator(vectorIterator, maxSpeed);
-    iterator = speedFilterDecorator;
-} else {
-    // Обработка ошибки: если iterator не является экземпляром VectorDroneIterator
-    // Здесь можно выводить сообщение об ошибке или принимать другие меры по усмотрению
-    cout << "Ошибка: Итератор не является экземпляром VectorDroneIterator." << endl;
-}
+    if (vectorIterator) {
+        auto speedFilterDecorator = new VectorMaxSpeedFilterIteratorDecorator(vectorIterator, maxSpeed);
+        iterator = speedFilterDecorator;
+    } else {
 
-    // Переопределяем итератор для использования декоратора
+    }
     // Выводим информацию о дронах с учетом фильтрации по максимальной скорости
     cout << "Дроны с максимальной скоростью не более " << maxSpeed << " м/с:" << endl;
     while (!iterator->isDone()) {
         Drone *currentDrone = iterator->getCurrent();
         if (currentDrone) {
-            currentDrone->printInfo();
+            // Добавляем проверку перед выводом, что максимальная скорость дрона меньше или равна заданной
+            if (currentDrone->getMaxSpeed() < maxSpeed) {
+                currentDrone->printInfo();
+            }
         }
         iterator->next();
     }
-
 }
 
+
+
 int main() {
+    cout << "-------------------------" << endl;
     setlocale(LC_ALL,"");
     srand(time(0));
     // Создаем контейнер вектора дронов
@@ -429,7 +427,7 @@ for (int i = 0; i < numDrones; ++i) {
 
 
     // Вызываем функцию для фильтрации и вывода дронов по максимальной скорости
-    float maxSpeedFilter = 3.0f;
+    float maxSpeedFilter = 5.00f;
     filterAndPrintDronesByMaxSpeed(container, maxSpeedFilter);
 
     int choice;
