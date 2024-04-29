@@ -40,6 +40,18 @@ public:
         cout << "Батарея дрона полностью заряжена." << endl;
     }
 
+    int getWeight() const {
+        return weight;
+    }
+
+    int getCurrentBattery() const {
+        return currentBattery;
+    }
+
+    int getMaxSpeed() const {
+    return maxSpeed;
+    }
+
     virtual ~Drone() {} // Виртуальный деструктор
 };
 
@@ -209,6 +221,116 @@ public:
     }
 };
 
+class WeightFilterIteratorDecorator : public DroneIterator<Drone *> { //декаратор фильтр по весу
+private:
+    DroneIterator<Drone *> *iterator;
+    int maxWeight;
+
+public:
+    WeightFilterIteratorDecorator(DroneIterator<Drone *> *iterator, int maxWeight)
+        : iterator(iterator), maxWeight(maxWeight) {}
+
+    void first() override {
+        iterator->first();
+    }
+
+    void next() override {
+        iterator->next();
+    }
+
+    bool hasNext() override {
+        while (iterator->hasNext()) {
+            Drone *currentDrone = iterator->getCurrent();
+            if (currentDrone && currentDrone->getWeight() <= maxWeight) {
+                return true;
+            }
+            iterator->next();
+        }
+        return false;
+    }
+
+    bool isDone() {
+        return iterator->isDone();
+    }
+
+    Drone* getCurrent() override {
+        return iterator->getCurrent();
+    }
+};
+
+class BatteryLevelFilterIteratorDecorator : public DroneIterator<Drone *> { //декоратор по уровню батареи
+private:
+    DroneIterator<Drone *> *iterator;
+    int minBatteryLevel;
+
+public:
+    BatteryLevelFilterIteratorDecorator(DroneIterator<Drone *> *iterator, int minBatteryLevel)
+        : iterator(iterator), minBatteryLevel(minBatteryLevel) {}
+
+    void first() override {
+        iterator->first();
+    }
+
+    void next() override {
+        iterator->next();
+    }
+
+    bool hasNext() override {
+        while (iterator->hasNext()) {
+            Drone *currentDrone = iterator->getCurrent();
+            if (currentDrone && currentDrone->getCurrentBattery() >= minBatteryLevel) {
+                return true;
+            }
+            iterator->next();
+        }
+        return false;
+    }
+
+    bool isDone() {
+        return iterator->isDone();
+    }
+
+    Drone* getCurrent() override {
+        return iterator->getCurrent();
+    }
+};
+
+class MaxSpeedFilterIteratorDecorator : public DroneIterator<Drone *> {
+private:
+    DroneIterator<Drone *> *iterator;
+    float maxSpeed;
+
+public:
+    MaxSpeedFilterIteratorDecorator(DroneIterator<Drone *> *iterator, float maxSpeed)
+        : iterator(iterator), maxSpeed(maxSpeed) {}
+
+    void first() override {
+        iterator->first();
+    }
+
+    void next() override {
+        iterator->next();
+    }
+
+    bool hasNext() override {
+        while (iterator->hasNext()) {
+            Drone *currentDrone = iterator->getCurrent();
+            if (currentDrone && currentDrone->getMaxSpeed() <= maxSpeed) {
+                return true;
+            }
+            iterator->next();
+        }
+        return false;
+    }
+
+    bool isDone() {
+        return iterator->isDone();
+    }
+
+    Drone* getCurrent() override {
+        return iterator->getCurrent();
+    }
+};
 
 
 int main() {
