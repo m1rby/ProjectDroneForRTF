@@ -1,125 +1,16 @@
 #include <iostream>
-#include <string>
 #include <vector>
 #include <list>
 #include <algorithm>
 #include <ctime>   // Для инициализации генератора случайных чисел
 #include <cstdlib> // Для использования rand()
 #include <cmath> // Для функции (задание 9)
+#include <string>
+#include "iterators.h"
+#include "decorators.h"
+#include "classes.h"
 
 using namespace std;
-
-class Drone {
-protected:
-    string model;
-    int weight;
-    float maxSpeed;
-    int batteryLife;
-    int currentBattery;
-
-public:
-    Drone(string model, int weight, float maxSpeed, int batteryLife)
-        : model(model), weight(weight), maxSpeed(maxSpeed), batteryLife(batteryLife), currentBattery(batteryLife) {}
-
-    virtual void printInfo() {
-        cout << "Модель: " << model << endl;
-        cout << "Вес: " << weight << " кг" << endl;
-        cout << "Максимальная скорость: " << maxSpeed << " м/с" << endl;
-        cout << "Максимальный заряд батареи: " << batteryLife << " процентов" << endl;
-        cout << "Заряд батареи: " << currentBattery << " процентов" << endl;
-    }
-
-    virtual void fly() {
-        if (currentBattery > 0) {
-            cout << "Дрон взлетел." << endl;
-        } else {
-            cout << "Дрон не может взлететь. Батарея разряжена." << endl;
-        }
-    }
-
-    virtual void chargeBattery() {
-        currentBattery = batteryLife;
-        cout << "Батарея дрона полностью заряжена." << endl;
-    }
-
-    int getWeight() const {
-        return weight;
-    }
-
-    int getCurrentBattery() const {
-        return currentBattery;
-    }
-
-    int getMaxSpeed() const {
-    return maxSpeed;
-    }
-
-    virtual ~Drone() {} // Виртуальный деструктор
-};
-
-class ScoutDrone : public Drone {
-private:
-    int cameraResolution;
-
-public:
-    ScoutDrone(string model, int weight, float maxSpeed, int batteryLife, int cameraResolution)
-        : Drone(model, weight, maxSpeed, batteryLife), cameraResolution(cameraResolution) {
-        currentBattery = 20;
-    }
-
-    void printInfo() override {
-        Drone::printInfo();
-        cout << "Разрешение камеры: " << cameraResolution << " МП" << endl;
-    }
-
-    void fly() override {
-        if (currentBattery >= 25) {
-            cout << "Разведывательный дрон начал разведку местности. ... Разведовательный дрон вернулся." << endl;
-            currentBattery -= 20;
-        } else {
-            cout << "Разведывательный дрон не может взлететь. Мало заряда. ОПАСНО!!!" << endl;
-        }
-    }
-};
-
-class CargoDrone : public Drone {
-private:
-    float maxCargoWeight;
-
-public:
-    CargoDrone(string model, int weight, float maxSpeed, int batteryLife, float maxCargoWeight)
-        : Drone(model, weight, maxSpeed,  batteryLife), maxCargoWeight(maxCargoWeight) {
-        currentBattery = 35; // Установим начальный заряд
-    }
-
-    void printInfo() override {
-        Drone::printInfo();
-        cout << "Максимальный вес груза: " << maxCargoWeight << " кг" << endl;
-    }
-
-    void fly() override {
-        if (currentBattery >= 20) {
-            cout << "Грузовой дрон выполняет доставку груза. ... Грузовой дрон вернулся" << endl;
-            currentBattery -= 20;
-        } else {
-            cout << "Грузовой дрон не может взлететь. Заряд меньше 20 процентов. ОПАСНО" << endl;
-        }
-    }
-};
-
-template<class Type>
-class DroneIterator { //общий класс для итератора
-protected:
-    DroneIterator(){}
-public:
-    virtual void first() = 0; // Установить итератор на первый элемент
-    virtual void next() = 0;  // Перейти к следующему элементу
-    virtual bool hasNext() = 0; // Проверить, есть ли следующий элемент
-    virtual bool isDone() const = 0; // Проверить, конец ли контейнера
-    virtual Type getCurrent() = 0; // Получить текущий элемент
-    virtual ~DroneIterator() {} // Виртуальный деструктор
-};
-
 
 class DroneContainer {
 public:
@@ -128,38 +19,6 @@ public:
     virtual void printAllDrones() = 0;
     virtual DroneIterator<Drone *> *getIterator() = 0;
     virtual ~DroneContainer() {}
-};
-
-class VectorDroneIterator : public DroneIterator<Drone *> { //для вектора дронов
-private:
-    vector<Drone *> &drones; // Ссылка на вектор дронов
-    size_t index; // Индекс текущего элемента
-
-public:
-    VectorDroneIterator(vector<Drone *> &drones) : drones(drones), index(0) {}
-
-    void first() override {
-        index = 0; // Устанавливаем итератор на начало вектора
-    }
-
-    void next() override {
-        index++; // Переходим к следующему элементу
-    }
-
-    bool hasNext() override {
-        return index < drones.size(); // Проверяем, есть ли следующий элемент
-    }
-
-    bool isDone() const override {
-        return index >= drones.size(); // Проверяем, дошли ли до предела контейнера
-    }
-
-    Drone* getCurrent() override {
-        if (index < drones.size()) {
-            return drones[index]; // Возвращаем текущий элемент
-        }
-        return nullptr;
-    }
 };
 
 class VectorDroneContainer : public DroneContainer {
@@ -186,38 +45,6 @@ public:
     }
 };
 
-class ListDroneIterator : public DroneIterator<Drone *> { //для списка дронов
-private:
-    list<Drone *> *drones; // Ссылка на список дронов
-    list<Drone *>::const_iterator it; // Итератор для списка
-
-public:
-    ListDroneIterator(list<Drone *> *drones) : drones(drones) {}
-
-    void first() override {
-        it = drones->begin(); // Устанавливаем итератор на начало списка
-    }
-
-    void next() override {
-        it++; // Переходим к следующему элементу
-    }
-
-    bool hasNext() override {
-        return it != drones->end(); // Проверяем, есть ли следующий элемент
-    }
-
-    bool isDone() const override {
-        return it == drones->end(); // Проверяем, дошли ли до предела контейнера
-    }
-
-    Drone* getCurrent() override {
-        if (it != drones->end()) {
-            return *it; // Возвращаем текущий элемент
-        }
-        return nullptr;
-    }
-};
-
 class ListDroneContainer : public DroneContainer {
 private:
     list<Drone *> drones;
@@ -239,119 +66,6 @@ public:
 
     DroneIterator<Drone *> *getIterator() override {
         return new ListDroneIterator(&drones);
-    }
-};
-
-
-
-class WeightFilterIteratorDecorator : public DroneIterator<Drone *> { //декаратор фильтр по весу
-private:
-    DroneIterator<Drone *> *iterator;
-    int maxWeight;
-
-public:
-    WeightFilterIteratorDecorator(DroneIterator<Drone *> *iterator, int maxWeight)
-        : iterator(iterator), maxWeight(maxWeight) {}
-
-    void first() override {
-        iterator->first();
-    }
-
-    void next() override {
-        iterator->next();
-    }
-
-    bool hasNext() override {
-        while (iterator->hasNext()) {
-            Drone *currentDrone = iterator->getCurrent();
-            if (currentDrone && currentDrone->getWeight() <= maxWeight) {
-                return true;
-            }
-            iterator->next();
-        }
-        return false;
-    }
-
-    bool isDone() const override {
-        return iterator->isDone();
-    }
-
-    Drone* getCurrent() override {
-        return iterator->getCurrent();
-    }
-};
-
-class BatteryLevelFilterIteratorDecorator : public DroneIterator<Drone *> { //декоратор по уровню батареи
-private:
-    DroneIterator<Drone *> *iterator;
-    int minBatteryLevel;
-
-public:
-    BatteryLevelFilterIteratorDecorator(DroneIterator<Drone *> *iterator, int minBatteryLevel)
-        : iterator(iterator), minBatteryLevel(minBatteryLevel) {}
-
-    void first() override {
-        iterator->first();
-    }
-
-    void next() override {
-        iterator->next();
-    }
-
-    bool hasNext() override {
-        while (iterator->hasNext()) {
-            Drone *currentDrone = iterator->getCurrent();
-            if (currentDrone && currentDrone->getCurrentBattery() >= minBatteryLevel) {
-                return true;
-            }
-            iterator->next();
-        }
-        return false;
-    }
-
-    bool isDone() const override {
-        return iterator->isDone();
-    }
-
-    Drone* getCurrent() override {
-        return iterator->getCurrent();
-    }
-};
-
-class VectorMaxSpeedFilterIteratorDecorator : public DroneIterator<Drone *> {
-private:
-    VectorDroneIterator *iterator;
-    float maxSpeed;
-
-public:
-    VectorMaxSpeedFilterIteratorDecorator(VectorDroneIterator *iterator, float maxSpeed)
-        : iterator(iterator), maxSpeed(maxSpeed) {}
-
-    void first() override {
-        iterator->first();
-    }
-
-    void next() override {
-        iterator->next();
-    }
-
-    bool hasNext() override {
-        while (iterator->hasNext()) {
-            Drone *currentDrone = iterator->getCurrent();
-            if (currentDrone && currentDrone->getMaxSpeed() <= maxSpeed) {
-                return true;
-            }
-            iterator->next();
-        }
-        return false;
-    }
-
-    bool isDone() const override {
-        return iterator->isDone();
-    }
-
-    Drone* getCurrent() override {
-        return iterator->getCurrent();
     }
 };
 

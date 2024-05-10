@@ -32,6 +32,8 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="classes.h" />
+		<Unit filename="decorators.h" />
 		<Unit filename="iterators.h" />
 		<Unit filename="main.cpp" />
 		<Extensions>
