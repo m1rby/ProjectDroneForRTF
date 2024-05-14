@@ -33,9 +33,14 @@
 			<Add option="-fexceptions" />
 		</Compiler>
 		<Unit filename="classes.h" />
+		<Unit filename="db.h" />
 		<Unit filename="decorators.h" />
 		<Unit filename="iterators.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="sqlite3.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="sqlite3.h" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>

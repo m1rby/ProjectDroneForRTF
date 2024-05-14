@@ -9,6 +9,9 @@
 #include "iterators.h"
 #include "decorators.h"
 #include "classes.h"
+#include "sqlite3.h"
+#include <cstdio> // Для использования функции remove()
+#include "db.h"
 
 using namespace std;
 
@@ -107,10 +110,15 @@ void filterAndPrintDronesByMaxSpeed(ContainerType* container, float maxSpeed) {
 
 
 int main() {
-    cout << "-------------------------" << endl;
-    setlocale(LC_ALL,"");
-    srand(time(0));
+ setlocale(LC_ALL,"");
+    cout << "--------------ВСЕ ДРОНЫ ИЗ БАЗЫ ДАННЫХ------------------" << endl;
+    initializeDroneDatabase();
+    // Вывод содержимого базы данных
+    printDroneDatabaseContents();
     // Создаем контейнер вектора дронов
+    cout << "-------------------------" << endl;
+    srand(time(0));
+
     DroneContainer *container = new VectorDroneContainer;
 
 
@@ -127,8 +135,8 @@ for (int i = 0; i < numDrones; ++i) {
     string model = "Model" + to_string(i);
     int weight = rand() % 1000 + 500;
     float maxSpeed = (rand() % 50 + 10) / 10.0f;
-    int batteryLife = rand() % 200 + 100;
-    int currentBattery = rand() % 200 + 100;
+    int batteryLife = 100;
+    int currentBattery = rand() % 100 + 1;
 
     Drone* drone;
     if (rand() % 2 == 0) {
@@ -141,7 +149,7 @@ for (int i = 0; i < numDrones; ++i) {
 
 
     // Вызываем функцию для фильтрации и вывода дронов по максимальной скорости
-    float maxSpeedFilter = 5.00f;
+    float maxSpeedFilter = 5.00f; //выбираем скорость по которой фильтруем
     filterAndPrintDronesByMaxSpeed(container, maxSpeedFilter);
 
     int choice;
@@ -198,6 +206,9 @@ for (int i = 0; i < numDrones; ++i) {
     } while (true);
 
     delete container; // Очищаем память от контейнера
+
+
+
 
     return 0;
 }
